@@ -23,12 +23,23 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr(""); setBusy(true);
+    try {
+      const ok = await adminLogin(email, pw);
+      if (ok) onSuccess();
+      else setErr("Invalid credentials");
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "Login failed");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-hero p-4">
-      <form
-        onSubmit={(e) => { e.preventDefault(); if (adminLogin(email, pw)) onSuccess(); else setErr("Invalid credentials"); }}
-        className="w-full max-w-md rounded-3xl bg-card p-8 shadow-elegant"
-      >
+      <form onSubmit={submit} className="w-full max-w-md rounded-3xl bg-card p-8 shadow-elegant">
         <h1 className="font-display text-2xl font-black">Admin Login</h1>
         <p className="mt-1 text-sm text-muted-foreground">Sign in to manage website content.</p>
         <div className="mt-6 space-y-3">
@@ -36,12 +47,13 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
           <input value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" type="password" className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-[var(--brand-2)]" />
         </div>
         {err && <div className="mt-3 text-sm text-destructive">{err}</div>}
-        <button className="mt-5 w-full rounded-xl bg-gradient-brand px-5 py-3 font-semibold text-white shadow-elegant">Sign In</button>
+        <button disabled={busy} className="mt-5 w-full rounded-xl bg-gradient-brand px-5 py-3 font-semibold text-white shadow-elegant disabled:opacity-50">{busy ? "Signing in…" : "Sign In"}</button>
         <Link to="/" className="mt-4 block text-center text-xs text-muted-foreground hover:text-foreground">← Back to site</Link>
       </form>
     </div>
   );
 }
+
 
 /* ---------- Editor ---------- */
 const SECTIONS = [
@@ -63,13 +75,15 @@ function AdminEditor({ onLogout }: { onLogout: () => void }) {
 
   const save = async () => {
     const pw = getAdminPassword();
-    if (!pw) { setErr("Session expired — please log in again."); return; }
+    if (!pw) { setErr("Session expired — please log in again."); adminLogout(); onLogout(); return; }
     setSaving(true); setErr(null);
     try {
       await saveContent(draft, pw);
       setSaved(true); setTimeout(() => setSaved(false), 1600);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Save failed");
+      const msg = e instanceof Error ? e.message : "Save failed";
+      setErr(msg);
+      if (/invalid password/i.test(msg)) { adminLogout(); onLogout(); }
     } finally {
       setSaving(false);
     }
@@ -77,12 +91,13 @@ function AdminEditor({ onLogout }: { onLogout: () => void }) {
   const reset = async () => {
     if (!confirm("Reset ALL content back to defaults?")) return;
     const pw = getAdminPassword();
-    if (!pw) { setErr("Session expired — please log in again."); return; }
+    if (!pw) { setErr("Session expired — please log in again."); adminLogout(); onLogout(); return; }
     setSaving(true); setErr(null);
     try { await resetContentToDefaults(pw); setDraft(DEFAULT_CONTENT); }
     catch (e) { setErr(e instanceof Error ? e.message : "Reset failed"); }
     finally { setSaving(false); }
   };
+
 
   const update = (patch: Partial<SiteContent>) => setDraft({ ...draft, ...patch });
 
