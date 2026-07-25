@@ -266,7 +266,7 @@ async function ensureHydrated() {
     .select("data")
     .eq("id", "main")
     .maybeSingle()
-    .then(({ data }) => {
+    .then(({ data }: { data: { data?: unknown } | null }) => {
       if (data && data.data && typeof data.data === "object") applyRemote(data.data);
     });
   // Realtime subscription — updates every open browser instantly
@@ -275,7 +275,7 @@ async function ensureHydrated() {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "site_content", filter: "id=eq.main" },
-      (payload) => {
+      (payload: { new?: { data?: unknown } | null; old?: { data?: unknown } | null }) => {
         const row = (payload.new ?? payload.old) as { data?: unknown } | null;
         if (row?.data && typeof row.data === "object") applyRemote(row.data);
       },
