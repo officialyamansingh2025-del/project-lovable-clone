@@ -331,31 +331,32 @@ export async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-/* auth (client-side gate only — for admin panel access) */
+/* auth (client-side gate — password verified against server ADMIN_PASSWORD secret) */
 const AUTH_KEY = "npi_admin_auth_v1";
+const PW_KEY = "npi_admin_pw_v1";
 export const ADMIN_EMAIL = "pitman2026@gmail.com";
-export const ADMIN_PASSWORD = "pitman2026@gmail.com";
 
 export function isAdminAuthed(): boolean {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem(AUTH_KEY) === "1";
 }
-export function adminLogin(email: string, password: string): boolean {
-  if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    window.localStorage.setItem(AUTH_KEY, "1");
-    window.localStorage.setItem("npi_admin_pw_v1", password);
-    return true;
-  }
-  return false;
+export async function adminLogin(email: string, password: string): Promise<boolean> {
+  if (email.trim().toLowerCase() !== ADMIN_EMAIL) return false;
+  const { verifyAdminPassword } = await import("./site-content.functions");
+  const res = await verifyAdminPassword({ data: { password } });
+  if (!res?.ok) return false;
+  window.localStorage.setItem(AUTH_KEY, "1");
+  window.localStorage.setItem(PW_KEY, password);
+  return true;
 }
 export function adminLogout() {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem(AUTH_KEY);
-    window.localStorage.removeItem("npi_admin_pw_v1");
+    window.localStorage.removeItem(PW_KEY);
   }
 }
 
 export function getAdminPassword(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("npi_admin_pw_v1");
+  return window.localStorage.getItem(PW_KEY);
 }
