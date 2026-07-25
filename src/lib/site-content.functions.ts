@@ -1,8 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 
+// Verifies the admin password against the ADMIN_PASSWORD secret.
+export const verifyAdminPassword = createServerFn({ method: "POST" })
+  .inputValidator((input: { password: string }) => {
+    if (!input || typeof input.password !== "string") throw new Error("Invalid payload");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const expected = process.env.ADMIN_PASSWORD;
+    if (!expected) throw new Error("Server not configured: ADMIN_PASSWORD is not set");
+    return { ok: data.password === expected };
+  });
+
 // Saves the site content to Lovable Cloud. Gated by ADMIN_PASSWORD.
-// The admin panel calls this from the client; realtime broadcasts the
-// update to every open browser instantly.
 export const saveSiteContent = createServerFn({ method: "POST" })
   .inputValidator((input: { password: string; data: unknown }) => {
     if (!input || typeof input.password !== "string" || typeof input.data !== "object" || input.data === null) {
@@ -12,7 +22,7 @@ export const saveSiteContent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const expected = process.env.ADMIN_PASSWORD;
-    if (!expected) throw new Error("Server not configured");
+    if (!expected) throw new Error("Server not configured: ADMIN_PASSWORD is not set");
     if (data.password !== expected) throw new Error("Invalid password");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
