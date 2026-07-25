@@ -75,13 +75,15 @@ function AdminEditor({ onLogout }: { onLogout: () => void }) {
 
   const save = async () => {
     const pw = getAdminPassword();
-    if (!pw) { setErr("Session expired — please log in again."); return; }
+    if (!pw) { setErr("Session expired — please log in again."); adminLogout(); onLogout(); return; }
     setSaving(true); setErr(null);
     try {
       await saveContent(draft, pw);
       setSaved(true); setTimeout(() => setSaved(false), 1600);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Save failed");
+      const msg = e instanceof Error ? e.message : "Save failed";
+      setErr(msg);
+      if (/invalid password/i.test(msg)) { adminLogout(); onLogout(); }
     } finally {
       setSaving(false);
     }
@@ -89,12 +91,13 @@ function AdminEditor({ onLogout }: { onLogout: () => void }) {
   const reset = async () => {
     if (!confirm("Reset ALL content back to defaults?")) return;
     const pw = getAdminPassword();
-    if (!pw) { setErr("Session expired — please log in again."); return; }
+    if (!pw) { setErr("Session expired — please log in again."); adminLogout(); onLogout(); return; }
     setSaving(true); setErr(null);
     try { await resetContentToDefaults(pw); setDraft(DEFAULT_CONTENT); }
     catch (e) { setErr(e instanceof Error ? e.message : "Reset failed"); }
     finally { setSaving(false); }
   };
+
 
   const update = (patch: Partial<SiteContent>) => setDraft({ ...draft, ...patch });
 
