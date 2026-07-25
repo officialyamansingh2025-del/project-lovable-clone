@@ -87,6 +87,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "New Pitman Institute — Computer Education in Najafgarh, Delhi" },
       { name: "twitter:description", content: "Govt. Registered computer training institute in Najafgarh offering MS Office, Tally Prime with GST, Advanced Excel, Typing (English/Hindi), DTP, hardware and career-oriented courses." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e1c1b149-0107-4119-b41c-34067f3500e0/id-preview-87c62e2a--ab4abb59-0018-423d-ac5e-01476e10db59.lovable.app-1784969191698.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e1c1b149-0107-4119-b41c-34067f3500e0/id-preview-87c62e2a--ab4abb59-0018-423d-ac5e-01476e10db59.lovable.app-1784969191698.png" },
     ],
     links: [
       {
